@@ -26,6 +26,7 @@ router.use(helpers.authorizedRequest);
 
 router.get('/check', (req, res) => {
     let pt = getPoint(req);
+    let user = req.user;
     if (!(pt.latitude && pt.longitude)) return helpers.sendError(res, 400, 'invalid query parameters');
 
     getNearbyEggs(10, pt.latitude, pt.longitude)

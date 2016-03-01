@@ -11,6 +11,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 
 app.use('/users', require('./routes/users'));
+app.use('/eggs', require('./routes/eggs'));
 
 app.use((req, res, next) => {
     var err = new Error('Not Found');
