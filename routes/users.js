@@ -6,19 +6,18 @@ const R = require('ramda');
 const helpers = require('./helpers');
 const makeAPIKey = require('../lib/apikey');
 const createUser = require('../models/user');
-const insertUser = require('../lib/mongo').insert('users');
+const insert = require('../lib/mongo').insert;
 
 router.post('/', helpers.adminOnly, (req, res) => {
     makeAPIKey()
         .then(createUser)
         .then(user =>
-            insertUser(user)
+            insert('users', user)
                 .then(() => {
-                    helpers.sendResult(res, R.omit(['_id'], user));
+                    helpers.sendResult(res, user);
                 })
         )
         .catch(helpers.sendError(res, 500));
-
 });
 
 module.exports = router;

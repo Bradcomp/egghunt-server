@@ -7,8 +7,8 @@ const helpers = require('./helpers');
 
 const EasterEgg = require('../models/easteregg');
 const getNearbyEggs = require('../lib/getnearbyeggs');
-const update = require('../lib/mongo').update('users');
-const insertEgg = require('../lib/mongo').insert('eggs');
+
+const db = require('../lib/mongo');
 
 const getPoint = R.compose(
     R.map(parseFloat),
@@ -21,7 +21,7 @@ const checkEggs = R.curry((user, eggs) =>
     R.find(egg => egg.user !== user.id && !R.contains(egg.id, user.eggsFound), eggs));
 
 const updateUser = (user, egg) =>
-    update({id: user.id}, {$push: {eggsFound: egg.id}})
+    db.update('users', {id: user.id}, {$push: {eggsFound: egg.id}})
         .then(() => ({egg}));
 
 //authorizedRequest takes care of attaching the User to the request.
@@ -35,23 +35,34 @@ router.get('/check', (req, res) => {
     getNearbyEggs(10, pt.latitude, pt.longitude)
         .then(checkEggs(user))
         .then(egg => egg ? updateUser(user, egg) : {egg: false})
-        .then(helpers.sendResult(res))
+        .then(egg => helpers.sendResult(res, R.omit(['_id', egg])))
         .catch(helpers.sendError(res, 500));
 });
 
 router.post('/', (req, res) => {
-    let attrs = req.body || {};
-    let egg = EasterEgg(req.user.id, attrs.latitude, attrs.longitude, attrs.icon);
+    const attrs = req.body || {};
+    const egg = EasterEgg(req.user.id, attrs.latitude, attrs.longitude, attrs.icon);
 
     if (!egg) return helpers.sendError(res, 400, 'invalid easter egg');
 
     getNearbyEggs(25, attrs.latitude, attrs.longitude)
         .then(eggs => eggs.length )
-        .then(tooClose => tooClose ? null : insertEgg(egg))
+        .then(tooClose => tooClose ? null : db.insert('eggs', egg))
         .then(results => {
             if (results) return helpers.sendResult(res, {created: true, egg});
             return helpers.sendResult(res, {created: false});
         })
+        .catch(helpers.sendError(res, 500));
+});
+
+router.put('/guestbook', (req, res) => {
+    const id = R.path(['body', 'egg'], req);
+    const signature = req.user.signature;
+    if (!id || !signature) return helpers.sendError(res, 400, 'missing egg id or signature');
+
+    db.update({id}, {$push: {guestbook, signature}})
+        .then(R.prop('nModified'))
+        .then(signed => helpers.sendResult(res, {signed}))
         .catch(helpers.sendError(res, 500));
 });
 

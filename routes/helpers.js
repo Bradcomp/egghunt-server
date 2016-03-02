@@ -1,6 +1,6 @@
 'use strict';
 const R = require('ramda');
-const db = require('../lib/mongo').db;
+const findOne = require('../lib/mongo').findOne;
 const config = require('../config');
 const getAuth = R.path(['headers', 'authorization']);
 
@@ -16,12 +16,13 @@ const authorizedRequest = (req, res, next) => {
         req.user = {};
         return next();
     }
-    db.users.findOne({apiKey}, (err, user) => {
-        if (err) return res.sendStatus(500);
+    findOne('users', {apiKey})
+    .then(user => {
         if (!user) return res.sendStatus(401);
         req.user = user;
         return next();
     })
+    .catch(err => { return res.sendStatus(500); })
 };
 
 const sendResult = R.curry((res, data) => {
