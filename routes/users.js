@@ -16,7 +16,7 @@ router.post('/', helpers.adminOnly, (req, res) => {
         .then(user =>
             insertUser(user)
                 .then(() => {
-                    helpers.sendResult(res, user);
+                    helpers.sendResult(res, R.pick(["id", "apiKey"], user));
                 })
         )
         .catch(helpers.sendError(res, 500));

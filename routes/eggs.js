@@ -34,8 +34,8 @@ router.get('/check', (req, res) => {
 
     getNearbyEggs(10, pt.latitude, pt.longitude)
         .then(checkEggs(user))
-        .then(egg => egg ? updateUser(user, egg) : {egg: false})
-        .then(egg => helpers.sendResult(res, R.omit(['_id', egg])))
+        .then(egg => egg ? updateUser(user, egg) : {found: false})
+        .then(egg => helpers.sendResult(res, {found: true, egg: R.omit(['_id', egg]})))
         .catch(helpers.sendError(res, 500));
 });
 
