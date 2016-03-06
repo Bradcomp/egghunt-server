@@ -27,6 +27,13 @@ const updateUser = (user, egg) =>
 //authorizedRequest takes care of attaching the User to the request.
 router.use(helpers.authorizedRequest);
 
+router.get('/', (req, res) => {
+    db.query('eggs', {id : {$in: req.user.eggsFound}})
+        .then(R.map(R.omit(['_id', '__v'])))
+        .then(helpers.sendResult(res))
+        .catch(helpers.sendError(res, 500));
+});
+
 router.get('/check', (req, res) => {
     let pt = getPoint(req);
     let user = req.user;
@@ -35,7 +42,7 @@ router.get('/check', (req, res) => {
     getNearbyEggs(10, pt.latitude, pt.longitude)
         .then(checkEggs(user))
         .then(egg => egg ? updateUser(user, egg) : {found: false})
-        .then(egg => helpers.sendResult(res, {found: true, egg: R.omit(['_id', egg]})))
+        .then(egg => helpers.sendResult(res, {found: true, egg: R.omit(['_id'], egg)}))
         .catch(helpers.sendError(res, 500));
 });
 
