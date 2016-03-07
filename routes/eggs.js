@@ -34,18 +34,6 @@ router.get('/', (req, res) => {
         .catch(helpers.sendError(res, 500));
 });
 
-router.get('/check', (req, res) => {
-    let pt = getPoint(req);
-    let user = req.user;
-    if (!(pt.latitude && pt.longitude)) return helpers.sendError(res, 400, 'invalid query parameters');
-
-    getNearbyEggs(10, pt.latitude, pt.longitude)
-        .then(checkEggs(user))
-        .then(egg => egg ? updateUser(user, egg) : {found: false})
-        .then(egg => helpers.sendResult(res, {found: true, egg: R.omit(['_id'], egg)}))
-        .catch(helpers.sendError(res, 500));
-});
-
 router.post('/', (req, res) => {
     const attrs = req.body || {};
     const egg = EasterEgg(req.user.id, attrs.latitude, attrs.longitude, attrs.icon);
@@ -59,6 +47,27 @@ router.post('/', (req, res) => {
             if (results) return helpers.sendResult(res, {created: true, egg});
             return helpers.sendResult(res, {created: false});
         })
+        .catch(helpers.sendError(res, 500));
+});
+
+router.delete('/:id', (req, res) => {
+    const id = req.params.id;
+    const user = req.user.id;
+    db.remove('eggs', {id, user})
+        .then(R.prop('nRemoved'))
+        .then(removed => helpers.sendResult(res, {removed: !!removed}))
+        .catch(helpers.sendError(res, 500))
+});
+
+router.get('/check', (req, res) => {
+    let pt = getPoint(req);
+    let user = req.user;
+    if (!(pt.latitude && pt.longitude)) return helpers.sendError(res, 400, 'invalid query parameters');
+
+    getNearbyEggs(10, pt.latitude, pt.longitude)
+        .then(checkEggs(user))
+        .then(egg => egg ? updateUser(user, egg) : {found: false})
+        .then(egg => helpers.sendResult(res, {found: true, egg: R.omit(['_id'], egg)}))
         .catch(helpers.sendError(res, 500));
 });
 
