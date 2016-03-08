@@ -9,6 +9,7 @@ const createUser = require('../models/user');
 const db = require('../lib/mongo');
 const insertUser = db.insert('users');
 const updateUser = db.update('users');
+const deleteUser = db.remove('users');
 
 router.post('/', helpers.adminOnly, (req, res) => {
     makeAPIKey()
@@ -20,6 +21,14 @@ router.post('/', helpers.adminOnly, (req, res) => {
                 })
         )
         .catch(helpers.sendError(res, 500));
+});
+
+router.delete('/:id', helpers.adminOnly, (req, res) => {
+    const id = req.params.id;
+    deleteUser({id})
+    .then(R.prop('nRemoved'))
+    .then(removed => helpers.sendResult(res, {removed}))
+    .catch(helpers.sendError(res, 500));
 });
 
 router.put('/signature', helpers.authorizedRequest, (req, res) => {
