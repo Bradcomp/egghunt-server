@@ -39,6 +39,16 @@ Response:
 }
 ```
 
+###DELETE /eggs/:id
+Deletes an egg.  Requires that the egg belong to the person doing the deleting.
+
+Response:
+```javascript
+{
+    "data": {"removed": Boolean}  
+}
+```
+
 ###GET /eggs/check
 Checks for an egg at a specified location.  Takes a latitude and longitude query parameter.
 Will add the egg to the foundEggs for the User.
@@ -76,6 +86,16 @@ Response:
         "apiKey": "String",
         "id": "UUID"
     }
+}
+```
+
+###DELETE /users/:id
+Deletes a user.  Requires admin authentication.
+
+Response:
+```javascript
+{
+    "data": {"removed": Boolean}  
 }
 ```
 

@@ -27,7 +27,7 @@ router.delete('/:id', helpers.adminOnly, (req, res) => {
     const id = req.params.id;
     deleteUser({id})
     .then(R.prop('nRemoved'))
-    .then(removed => helpers.sendResult(res, {removed}))
+    .then(removed => helpers.sendResult(res, {removed: !!removed}))
     .catch(helpers.sendError(res, 500));
 });
 
@@ -38,7 +38,7 @@ router.put('/signature', helpers.authorizedRequest, (req, res) => {
     updateUser({id: req.user.id}, {$set: {signature}})
         .then(R.prop('nModified'))
         .then(updated => updated ?
-            helpers.sendResult(res, {updated}) :
+            helpers.sendResult(res, {updated: !!updated}) :
             helpers.sendError(res, 500, 'something went wrong')
         )
         .catch(helpers.sendError(res, 500));
