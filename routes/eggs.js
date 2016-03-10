@@ -76,9 +76,11 @@ router.put('/guestbook', (req, res) => {
     const signature = req.user.signature;
     if (!id || !signature) return helpers.sendError(res, 400, 'missing egg id or signature');
 
-    db.update({id}, {$push: {guestbook, signature}})
+    db.update('eggs', {id}, {$push: {guestbook, signature}})
         .then(R.prop('nModified'))
-        .then(signed => helpers.sendResult(res, {signed}))
+        .then(signed => {
+            helpers.sendResult(res, {signed});
+        })
         .catch(helpers.sendError(res, 500));
 });
 

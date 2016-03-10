@@ -2,3 +2,4 @@
 *.log
 *.map
 .DS_Store
+coverage/

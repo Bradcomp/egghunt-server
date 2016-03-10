@@ -4,7 +4,8 @@
   "description": "JSON api for retrieving easter eggs and users for the Egghunt app",
   "main": "app.js",
   "scripts": {
-    "test": "mocha"
+    "test": "mocha",
+    "test-cov": "istanbul cover _mocha"
   },
   "author": "Bradcomp",
   "license": "MIT",
@@ -15,5 +16,10 @@
     "mongojs": "^2.3.0",
     "node-uuid": "^1.4.7",
     "ramda": "^0.19.1"
+  },
+  "devDependencies": {
+    "expect.js": "^0.3.1",
+    "mocha": "^2.4.5",
+    "supertest": "^1.2.0"
   }
 }
