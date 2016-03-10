@@ -106,6 +106,7 @@ Response:
 ```javascript
 {
     "data": {
+        "updated": Boolean,
         "signature": "String"
     }
 }
