@@ -5,7 +5,6 @@ const R = require('ramda');
 const db = require('../../lib/mongo');
 
 const app = require('../../app');
-app.listen(3001);
 
 const sampleUser = {
     id: 'abc123',
