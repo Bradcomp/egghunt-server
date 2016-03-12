@@ -74,7 +74,7 @@ describe('User routes', () => {
                 .put('/users/signature')
                 .set({authorization: 'zyxwvut'})
                 .send({signature: 'I am a sample'})
-                .expect(500)
+                .expect(200)
                 .end((err, result) => {
                     expect(result.body).to.eql({
                         status: 'success',
