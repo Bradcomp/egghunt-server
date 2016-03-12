@@ -36,8 +36,7 @@ router.put('/signature', helpers.authorizedRequest, (req, res) => {
     if (!signature) return helpers.sendError(res, 400, 'Invalid signature');
 
     updateUser({id: req.user.id}, {$set: {signature}})
-        .then(R.tap(console.log))
-        .then(R.prop('nModified'))
+        .then(R.prop('n'))
         .then(updated => updated ?
             helpers.sendResult(res, {updated: !!updated, signature}) :
             helpers.sendError(res, 500, 'something went wrong')
