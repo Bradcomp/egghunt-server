@@ -14,10 +14,14 @@ const sampleUser = {
 
 describe('Easter egg routes', () => {
     before(done => {
-        db.insert('users', sampleUser).then(() => done());
+        db.insert('users', sampleUser)
+            .then(() => db.remove('eggs', {}))
+            .then(() => done());
     });
     after(done => {
-        db.remove('users', {}).then(() => done());
+        db.remove('users', {})
+            .then(() => db.remove('eggs', {}))
+            .then(() => done());
     });
     describe('Create a new egg', () => {
         it('should require an authenticated user', done => {
@@ -51,6 +55,28 @@ describe('Easter egg routes', () => {
                 .expect(400)
                 .end((err, result) => {
                     expect(result.body).to.eql({error: 'invalid easter egg'});
+                    done();
+                });
+        });
+        it('should create a new egg', done => {
+            request(app)
+                .post('/eggs')
+                .set({authorization: 'zyxwvut'})
+                .send({
+                    "latitude": 38.7071247,
+                    "longitude": -121.2810611,
+                    "icon": "B"
+                })
+                .expect(200)
+                .end((err, result) => {
+                    const egg = R.path(['body', 'data', 'egg'], result);
+                    expect(egg.id).to.be.a('string');
+                    expect(egg.user).to.be('abc123');
+                    expect(egg.icon).to.be('B');
+                    expect(egg.location).to.eql({
+                        type: 'Point',
+                        coordinates: [-121.2810611, 38.7071247]
+                    });
                     done();
                 });
         });

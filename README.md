@@ -4,6 +4,21 @@ An API for servicing the Egghunt iOS app that doesn't exist yet.
 All responses will have either a data field containing the response data,
 or an error field with the relevant information.
 
+## Egg
+The structure of an egg is as follows
+```javascript
+{
+    user: UUID,
+    icon: String,  //A single unicode character
+    id: UUID,
+    guestBook: Array,
+    location: {
+        type: 'Point',
+        coordinates: [ Longitude, Latitude ]
+    }
+}
+```
+
 ##Authentication
 Authentication can be set via an authentication header.
 
