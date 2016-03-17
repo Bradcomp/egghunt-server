@@ -80,6 +80,21 @@ describe('Easter egg routes', () => {
                     done();
                 });
         });
+        it('should refuse to create an egg too close to another', done => {
+            request(app)
+                .post('/eggs')
+                .set({authorization: 'zyxwvut'})
+                .send({
+                    "latitude": 38.7071248,
+                    "longitude": -121.2810610,
+                    "icon": "B"
+                })
+                .expect(200)
+                .end((err, result) => {
+                    expect(R.path(['body', 'data', 'created'], result)).to.be(false);
+                    done();
+                });
+        });
     });
     describe('Get found eggs', () => {
         it('should require an authenticated user', done => {
