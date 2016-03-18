@@ -96,12 +96,35 @@ describe('Easter egg routes', () => {
                 });
         });
     });
+    describe('Check for an egg', () => {
+        it('should require lat and long', done => {
+            request(app)
+                .get('/eggs/check')
+                .set({authorization: 'zyxwvut'})
+                .expect(400)
+                .end((err, result) => {
+                    expect(result.body.error).to.be('invalid query parameters');
+                    done();
+                })
+        });
+    });
     describe('Get found eggs', () => {
         it('should require an authenticated user', done => {
             request(app)
                 .get('/eggs')
                 .expect(401)
                 .end(done);
+        });
+
+        it('should not retrieve eggs for the user that has none', done => {
+            request(app)
+                .get('/eggs')
+                .set({authorization: 'zyxwvut'})
+                .expect(200)
+                .end((err, result) => {
+                    expect(result.body.data).to.eql([]);
+                    done();
+                });
         });
     });
 });
