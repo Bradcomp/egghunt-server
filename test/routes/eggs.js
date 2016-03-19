@@ -11,10 +11,16 @@ const sampleUser = {
     apiKey: 'zyxwvut',
     eggsFound: []
 }
+const sample2 = {
+    id: 'zyx987',
+    apiKey: 'abcdefg',
+    eggsFound: []
+}
 
 describe('Easter egg routes', () => {
     before(done => {
         db.insert('users', sampleUser)
+            .then(() => db.insert('users', sample2))
             .then(() => db.remove('eggs', {}))
             .then(() => done());
     });
@@ -104,6 +110,20 @@ describe('Easter egg routes', () => {
                 .expect(400)
                 .end((err, result) => {
                     expect(result.body.error).to.be('invalid query parameters');
+                    done();
+                })
+        });
+        it('should not find your own egg', done => {
+            request(app)
+                .get('/eggs/check')
+                .set({authorization: 'zyxwvut'})
+                .query({
+                    "latitude": 38.7071248,
+                    "longitude": -121.2810610
+                })
+                .expect(200)
+                .end((err, result) => {
+                    expect(result.body.data).to.eql({found: false});
                     done();
                 })
         });

@@ -22,7 +22,7 @@ const checkEggs = R.curry((user, eggs) =>
 
 const updateUser = (user, egg) =>
     db.update('users', {id: user.id}, {$push: {eggsFound: egg.id}})
-        .then(() => ({egg}));
+        .then(() => ({egg, found: true}));
 
 //authorizedRequest takes care of attaching the User to the request.
 router.use(helpers.authorizedRequest);
@@ -67,7 +67,7 @@ router.get('/check', (req, res) => {
     getNearbyEggs(10, pt.latitude, pt.longitude)
         .then(checkEggs(user))
         .then(egg => egg ? updateUser(user, egg) : {found: false})
-        .then(egg => helpers.sendResult(res, {found: true, egg: R.omit(['_id'], egg)}))
+        .then(egg => helpers.sendResult(res, egg))
         .catch(helpers.sendError(res, 500));
 });
 
