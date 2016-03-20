@@ -18,7 +18,16 @@ The structure of an egg is as follows
     }
 }
 ```
-
+## User
+The structure of a user is as follows
+```javascript
+{
+    id: UUID,
+    apiKey: String,
+    signature: String,
+    eggsFound: [UUID]
+}
+```
 ##Authentication
 Authentication can be set via an authentication header.
 
