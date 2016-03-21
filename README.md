@@ -37,6 +37,8 @@ You get the apiKey when you create a user.  All endpoints are authenticated.
 
 ## API endpoints
 
+All endpoints have a `{status: 'SUCCESS'}` field, or an error field with an indication of what went wrong.
+
 ### GET /eggs
 Returns a list of the found eggs for the user.  
 
