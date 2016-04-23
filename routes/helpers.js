@@ -33,6 +33,7 @@ const sendResult = R.curry((res, data) => {
 });
 
 const sendError = R.curry((res, status, error) => {
+    console.log(error);
     res.status(status).json({error});
 });
 

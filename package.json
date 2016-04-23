@@ -13,9 +13,11 @@
   "dependencies": {
     "body-parser": "^1.15.0",
     "express": "^4.13.4",
+    "fluture": "^0.6.5",
     "mongojs": "^2.3.0",
     "node-uuid": "^1.4.7",
-    "ramda": "^0.19.1"
+    "ramda": "^0.19.1",
+    "sanctuary": "^0.10.0"
   },
   "devDependencies": {
     "expect.js": "^0.3.1",

@@ -1,6 +1,7 @@
 'use strict';
 const R = require('ramda');
 const uuid = require('node-uuid');
+const S = require('sanctuary');
 
 //isValid :: Egg -> Bool
 const isValid = egg => {
@@ -10,9 +11,9 @@ const isValid = egg => {
     return true;
 };
 
-//EasterEgg :: String, Float, Float, String -> Egg?
+//EasterEgg :: String, Float, Float, String -> Maybe Egg
 const EasterEgg = (user, latitude, longitude, icon) => {
-    let egg = {
+    const egg = {
         user,
         icon,
         id: uuid.v4(),
@@ -22,8 +23,8 @@ const EasterEgg = (user, latitude, longitude, icon) => {
             coordinates: [parseFloat(longitude), parseFloat(latitude)]
         }
     };
-    if (isValid(egg)) return egg;
-    return false;
+    if (isValid(egg)) return S.Just(egg);
+    return S.Nothing();
 };
 
 module.exports = EasterEgg;
