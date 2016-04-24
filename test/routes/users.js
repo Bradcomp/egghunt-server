@@ -40,56 +40,56 @@ describe('User routes', () => {
                 );
         });
     });
-    // describe('Add user signature', () => {
-    //     before(done => db.insert('users', sampleUser).then(() => done()));
-    //     it('should require authentication', done => {
-    //         request(app)
-    //             .put('/users/signature')
-    //             .expect(401)
-    //             .end(done);
-    //     });
-    //     it('should require a signature', done => {
-    //         request(app)
-    //             .put('/users/signature')
-    //             .set({authorization: 'FAKE TOKEN'})
-    //             .expect(400)
-    //             .end((err, result) => {
-    //                 expect(result.body).to.eql({error: 'Invalid signature'});
-    //                 done();
-    //             });
-    //     });
-    //     it('should require a real user', done => {
-    //         request(app)
-    //             .put('/users/signature')
-    //             .set({authorization: 'FAKE TOKEN'})
-    //             .send({signature: 'I am an admin'})
-    //             .expect(500)
-    //             .end((err, result) => {
-    //                 expect(result.body).to.eql({error: 'something went wrong'});
-    //                 done();
-    //             });
-    //     });
-    //     it('should set a signature for a user', done => {
-    //         request(app)
-    //             .put('/users/signature')
-    //             .set({authorization: 'zyxwvut'})
-    //             .send({signature: 'I am a sample'})
-    //             .expect(200)
-    //             .end((err, result) => {
-    //                 expect(result.body).to.eql({
-    //                     status: 'success',
-    //                     data: { updated: true, signature: 'I am a sample' }
-    //                 });
-    //                 db.findOne('users', sampleUser)
-    //                     .then(user => {
-    //                         expect(user.signature).to.be('I am a sample');
-    //                         done();
-    //                     });
-    //             });
-    //     });
-    // });
-    describe("Delete a member", () => {
+    describe('Add user signature', () => {
+        const sigRequest = request('put', '/users/signature');
         before(done => db.insert('users', sampleUser).fork(console.log, () => done()));
+
+        it('should require authentication', done => {
+            sigRequest(null, null, 401)
+                .fork(console.log, () => done());
+        });
+        it('should require a signature', done => {
+            sigRequest('FAKE TOKEN', null, 400)
+                .fork(
+                    console.error,
+                    result => {
+                        expect(result.body).to.eql({error: 'Invalid signature'});
+                        done();
+                    }
+                );
+
+        });
+        it('should require a real user', done => {
+            request(app)
+                .put('/users/signature')
+                .set({authorization: 'FAKE TOKEN'})
+                .send({signature: 'I am an admin'})
+                .expect(500)
+                .end((err, result) => {
+                    expect(result.body).to.eql({error: 'something went wrong'});
+                    done();
+                });
+        });
+        it('should set a signature for a user', done => {
+            request(app)
+                .put('/users/signature')
+                .set({authorization: 'zyxwvut'})
+                .send({signature: 'I am a sample'})
+                .expect(200)
+                .end((err, result) => {
+                    expect(result.body).to.eql({
+                        status: 'success',
+                        data: { updated: true, signature: 'I am a sample' }
+                    });
+                    db.findOne('users', sampleUser)
+                        .then(user => {
+                            expect(user.signature).to.be('I am a sample');
+                            done();
+                        });
+                });
+        });
+    });
+    describe("Delete a member", () => {
         it('should require an ID', done => {
             request('del', '/users', 'FAKE TOKEN', null, 404)
                 .fork(console.log, () => done())
