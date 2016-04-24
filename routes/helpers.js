@@ -50,9 +50,9 @@ const sendResult = R.curry((res, data) => {
     });
 });
 
-const sendError = R.curry((res, status, error) => {
+const sendError = R.curry((res, error) => {
     console.log(error);
-    res.status(status).json({error});
+    res.status(error.status || 500).json(R.omit(['status'], error));
 });
 
 module.exports = {adminOnly, authorizedRequest, sendResult, sendError};

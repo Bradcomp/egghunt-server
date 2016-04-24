@@ -8,6 +8,7 @@ const helpers = require('./helpers');
 const makeAPIKey = require('../lib/apikey');
 const createUser = require('../models/user');
 const db = require('../lib/mongo');
+const maybeToFuture = require('../lib/maybetofuture');
 const insertUser = db.insert('users');
 const updateUser = db.update('users');
 const deleteUser = db.remove('users');
@@ -16,7 +17,7 @@ const executeUserInsert = R.compose(R.map(insertUser))
 
 router.post('/', helpers.adminOnly, (req, res) => {
     const keySize = 60;
-    const handleError = helpers.sendError(res, 500);
+    const handleError = () => helpers.sendError(res, {status: 500, message: 'something went wrong'});
     const handleSuccess = user => helpers.sendResult(res, R.pick(["id", "apiKey"], user))
 
     S.pipe([
@@ -27,19 +28,18 @@ router.post('/', helpers.adminOnly, (req, res) => {
     ])(keySize);
 });
 
-const wasUpdated = R.compose(n => !!n, R.prop('n'));
-
 router.delete('/:id', helpers.adminOnly, (req, res) => {
     const id = req.params.id;
 
     S.pipe([
         deleteUser,
         R.map(S.pipe([
-            wasUpdated,
-            R.assoc('removed', R.__, {})
+            R.prop('n'),
+            Boolean,
+            R.objOf('removed')
         ])),
         F.fork(
-            helpers.sendError(res, 500),
+            err => R.compose(helpers.sendError(res), R.merge({status: 500})),
             helpers.sendResult(res)
         )
     ])({id});
@@ -47,37 +47,26 @@ router.delete('/:id', helpers.adminOnly, (req, res) => {
 });
 
 router.put('/signature', helpers.authorizedRequest, (req, res) => {
-    // const signature = R.compose(
-    //     S.maybe(R.map(R.assocPath(['$set', ]))),
-    //     S.toMaybe,
-    //     R.path(['body', 'signature'])
-    // )(req);
-    const signature = R.path(['body', 'signature'])(req)
+    const signature = R.map(
+        R.assocPath(['$set', 'signature'], R.__, {}),
+        S.gets(String, ['body', 'signature'], req)
+    );
     const id = req.user.id;
-
-    // S.pipe([
-    //     R.map(updateUser({id})),
-    //     R.map(R.map(wasUpdated)),
-    //     R.map(R.chain(R.ifElse(
-    //         R.identity,
-    //         F.of,
-    //         R.always(F.reject('something went wrong'))
-    //     ))),
-    //     R.map(F.fork(
-    //         helpers.sendError(res, 500),
-    //
-    //     ))
-    // ])(signature)
-
-    if (!signature) return helpers.sendError(res, 400, 'Invalid signature');
-
-    updateUser({id: req.user.id}, {$set: {signature}})
-        .then(R.prop('n'))
-        .then(updated => updated ?
-            helpers.sendResult(res, {updated: !!updated, signature}) :
-            helpers.sendError(res, 500, 'something went wrong')
+    S.pipe([
+        maybeToFuture({status: 400, message: 'Invalid signature'}),
+        R.chain(updateUser({id})),
+        R.map(R.prop('n')),
+        R.chain(updated => {
+            return updated ?
+                F.of(R.map(R.assoc('updated', true), R.chain(S.get(Object, '$set'), signature))) :
+                F.reject({status: 500, message: 'something went wrong'})
+        }),
+        F.fork(
+            R.compose(helpers.sendError(res), R.merge({status: 500})),
+            R.map(helpers.sendResult(res))
         )
-        .catch(helpers.sendError(res, 500));
+    ])(signature)
+
 });
 
 module.exports = router;

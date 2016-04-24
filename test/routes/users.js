@@ -16,7 +16,7 @@ const sampleUser = {
 
 describe('User routes', () => {
     after(done => {
-        db.remove('users', {}).map(() => done());
+        db.remove('users', {}).fork(console.log, () => done());
     });
     describe('Create User', () => {
         it('should reject invalid authentication', done => {
@@ -53,40 +53,38 @@ describe('User routes', () => {
                 .fork(
                     console.error,
                     result => {
-                        expect(result.body).to.eql({error: 'Invalid signature'});
+                        expect(result.body).to.eql({message: 'Invalid signature'});
                         done();
                     }
                 );
 
         });
         it('should require a real user', done => {
-            request(app)
-                .put('/users/signature')
-                .set({authorization: 'FAKE TOKEN'})
-                .send({signature: 'I am an admin'})
-                .expect(500)
-                .end((err, result) => {
-                    expect(result.body).to.eql({error: 'something went wrong'});
+            sigRequest('FAKE TOKEN', {signature: 'I am an admin'}, 500)
+                .fork(
+                    console.log,
+                    result => {
+                    expect(result.body).to.eql({message: 'something went wrong'});
                     done();
                 });
         });
         it('should set a signature for a user', done => {
-            request(app)
-                .put('/users/signature')
-                .set({authorization: 'zyxwvut'})
-                .send({signature: 'I am a sample'})
-                .expect(200)
-                .end((err, result) => {
+            sigRequest('zyxwvut', {signature: 'I am a sample'}, 200)
+                .chain(result => {
                     expect(result.body).to.eql({
                         status: 'success',
                         data: { updated: true, signature: 'I am a sample' }
                     });
-                    db.findOne('users', sampleUser)
-                        .then(user => {
-                            expect(user.signature).to.be('I am a sample');
-                            done();
-                        });
-                });
+                    return db.findOne('users', sampleUser);
+                })
+                .fork(
+                    console.log,
+                    R.map(user => {
+                        expect(user.signature).to.be('I am a sample');
+                        done();
+                    })
+                );
+
         });
     });
     describe("Delete a member", () => {
