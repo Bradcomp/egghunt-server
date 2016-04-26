@@ -13,12 +13,16 @@ const getNearbyEggs = require('../lib/getnearbyeggs');
 
 const db = require('../lib/mongo');
 
-const getPoint = R.compose(
-    R.map(parseFloat),
-    R.pick(['latitude', 'longitude']),
-    R.defaultTo({}),
-    R.prop('query')
-)
+const getFloat = field => R.compose(R.chain(S.parseFloat), S.get(String, field));
+
+const getPoint = S.pipe([
+    S.get(Object, 'query'),
+    R.chain(R.converge(
+        R.unapply(R.sequence(S.Maybe.of)),
+        [getFloat('longitude'), getFloat('latitude')]
+    ))
+])
+
 
 const eggLocation = R.path(['location', 'coordinates']);
 
@@ -48,17 +52,16 @@ router.get('/', (req, res) => {
 router.post('/', (req, res) => {
     const attrs = S.get(Object, 'body', req);
     const egg = R.chain(egg => EasterEgg(req.user.id, egg.latitude, egg.longitude, egg.icon), attrs);
+    const insertEgg = egg => db.insert('eggs', egg).map(() => ({egg, created: true}));
     S.pipe([
         maybeToFuture({status: 400, message: 'invalid easter egg'}),
         R.map(eggLocation),
-        R.chain(R.pipe(
-            getNearbyEggs(25),
-            R.map(nearby =>
-                nearby.length > 0 ?
-                    S.Just({created: false}) :
-                    R.map(R.assoc('egg', R.__, {created: true}), egg)
-            )
-        )),
+        R.chain(getNearbyEggs(25)),
+        R.chain(nearby =>
+            nearby.length > 0 ?
+                F.of(S.Just({created: false})) :
+                R.sequence(F.of, R.map(insertEgg, egg))
+        ),
         F.fork(
             R.compose(helpers.sendError(res), R.merge({status: 500})),
             R.map(helpers.sendResult(res))
@@ -70,21 +73,27 @@ router.delete('/:id', (req, res) => {
     const id = req.params.id;
     const user = req.user.id;
     db.remove('eggs', {id, user})
-        .then(R.prop('nRemoved'))
-        .then(removed => helpers.sendResult(res, {removed: !!removed}))
-        .catch(helpers.sendError(res, 500))
+        .map(R.compose(R.objOf('removed'), Boolean, R.prop('nRemoved')))
+        .fork(
+            helpers.sendError(res),
+            helpers.sendResult(res)
+        );
 });
 
 router.get('/check', (req, res) => {
-    let pt = getPoint(req);
-    let user = req.user;
-    if (!(pt.latitude && pt.longitude)) return helpers.sendError(res, 400, 'invalid query parameters');
+    const user = req.user;
 
-    getNearbyEggs(10, pt.latitude, pt.longitude)
-        .then(checkEggs(user))
-        .then(egg => egg ? updateUser(user, egg) : {found: false})
-        .then(egg => helpers.sendResult(res, egg))
-        .catch(helpers.sendError(res, 500));
+    S.pipe([
+        getPoint,
+        maybeToFuture({status: 400, message: 'invalid query parameters'}),
+        R.chain(getNearbyEggs(10)),
+        R.map(checkEggs(user)),
+        R.chain(S.maybe(F.of({found: false}), egg => updateUser(user, egg).map(() => egg))),
+        F.fork(
+            helpers.sendError(res),
+            helpers.sendResult(res)
+        )
+    ])(req);
 });
 
 router.put('/guestbook', (req, res) => {

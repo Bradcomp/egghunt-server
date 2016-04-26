@@ -1,7 +1,7 @@
 'use strict';
 const expect = require('expect.js');
 const R = require('ramda');
-const S = require('sanctuary'); 
+const S = require('sanctuary');
 const db = require('../../lib/mongo');
 
 const app = require('../../app');
@@ -83,10 +83,11 @@ describe('Easter egg routes', () => {
                 })
                 .fork(
                     console.log,
-                    result => {
-
-                    }
-                    );
+                    R.map(result => {
+                        expect(result.icon).to.be('B');
+                        done();
+                    })
+                );
         });
         it('should refuse to create an egg too close to another', done => {
             const body = {
@@ -109,7 +110,7 @@ describe('Easter egg routes', () => {
                 .fork(
                     console.log,
                     result => {
-                        expect(result.body.error).to.be('invalid query parameters');
+                        expect(result.body.message).to.be('invalid query parameters');
                         done();
                 });
         });
