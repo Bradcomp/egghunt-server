@@ -2,10 +2,12 @@
 const expect = require('expect.js');
 const R = require('ramda');
 const S = require('sanctuary');
+const F = require('fluture');
 const db = require('../../lib/mongo');
 
 const app = require('../../app');
 const request = require('../helpers/requesttofuture')(app);
+const getNearbyEgge = require('../../lib/getnearbyeggs');
 
 const sampleUser = {
     id: 'abc123',
@@ -142,6 +144,29 @@ describe('Easter egg routes', () => {
                         expect(result.body.data).to.eql([]);
                         done();
                 });
+        });
+    });
+    describe('Delete egg', () => {
+        it('should delete an egg', done => {
+            db.findOne('eggs', {user: 'abc123'})
+                .chain(S.maybe(F.reject('egg not found'), F.of))
+                .chain(egg =>
+                    request('delete', `/eggs/${egg.id}`, 'zyxwvut', null, 200)
+                        .map(result => ({result, egg}))
+                )
+                .chain(({result, egg}) => {
+                    expect(result.body.data.removed).to.be(true);
+                    return db.findOne('eggs', {id: egg.id});
+                })
+                .map(egg => {
+                    expect(S.isNothing(egg)).to.be(true);
+                    return null;
+                })
+                .fork(
+                    console.log,
+                    done
+                );
+
         });
     });
 });

@@ -72,12 +72,19 @@ router.post('/', (req, res) => {
 router.delete('/:id', (req, res) => {
     const id = req.params.id;
     const user = req.user.id;
-    db.remove('eggs', {id, user})
-        .map(R.compose(R.objOf('removed'), Boolean, R.prop('nRemoved')))
-        .fork(
+
+    S.pipe([
+        db.remove('eggs'),
+        R.map(S.pipe([
+            R.prop('n'),
+            Boolean,
+            R.objOf('removed')
+        ])),
+        F.fork(
             helpers.sendError(res),
             helpers.sendResult(res)
-        );
+        )
+    ])({id, user});
 });
 
 router.get('/check', (req, res) => {
