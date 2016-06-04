@@ -2,4 +2,4 @@ machine:
   timezone:
     America/Los_Angeles # Set the timezone
   node:
-    version: 5.8.0
+    version: 6.0.0
