@@ -51,7 +51,7 @@ const sendResult = R.curry((res, data) => {
 });
 
 const sendError = R.curry((res, error) => {
-    console.log(error);
+    console.log('ERROR: ', error);
     res.status(error.status || 500).json(R.omit(['status'], error));
 });
 

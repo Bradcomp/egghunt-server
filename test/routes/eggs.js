@@ -17,6 +17,7 @@ const sampleUser = {
 const sample2 = {
     id: 'zyx987',
     apiKey: 'abcdefg',
+    signature: 'Hi There!',
     eggsFound: []
 }
 
@@ -146,6 +147,34 @@ describe('Easter egg routes', () => {
                 });
         });
     });
+    describe('Sign guestbook', () => {
+        it('should require an authenticated user', done => {
+            request('put', '/eggs/guestbook', null, null, 401)
+                .fork(console.log, () => done());
+        });
+        it('should sign the guestbook', done => {
+            db.findOne('eggs', {user: 'abc123'})
+                .chain(S.maybe(F.reject('egg not found'), F.of))
+                .chain(egg =>
+                    request('put', '/eggs/guestbook', 'abcdefg', {
+                        egg: egg.id
+                    }, 200).map(result => ({result, egg}))
+                )
+                .chain(({result, egg}) => {
+                    expect(result.body.data).to.eql({signed: true});
+                    return db.findOne('eggs', {id: egg.id})
+                })
+                .map(egg => {
+                    expect(S.isNothing(egg)).to.be(false);
+                    R.map(R.tap(egg => expect(egg.guestbook).to.eql(['Hi There!'])));
+                    return null;
+                })
+                .fork(
+                    console.log,
+                    done
+                );;
+        });
+    });
     describe('Delete egg', () => {
         it('should delete an egg', done => {
             db.findOne('eggs', {user: 'abc123'})
@@ -169,4 +198,5 @@ describe('Easter egg routes', () => {
 
         });
     });
+
 });

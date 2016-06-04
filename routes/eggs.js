@@ -104,16 +104,24 @@ router.get('/check', (req, res) => {
 });
 
 router.put('/guestbook', (req, res) => {
-    const id = R.path(['body', 'egg'], req);
-    const signature = req.user.signature;
-    if (!id || !signature) return helpers.sendError(res, 400, 'missing egg id or signature');
+    const data = R.sequence(S.Maybe.of,
+        [
+            S.gets(String, ['body', 'egg'], req),
+            S.gets(String, ['user', 'signature'], req)
+        ]
+    );
+    S.pipe([
+        maybeToFuture({status: 400, message: 'missing egg id or signature'}),
+        R.chain(([id, signature]) =>
+            db.update('eggs', {id}, {$push: {guestbook: signature}})
+        ),
+        R.map(R.compose(R.objOf('signed'), Boolean, R.prop('n'))),
 
-    db.update('eggs', {id}, {$push: {guestbook, signature}})
-        .then(R.prop('nModified'))
-        .then(signed => {
-            helpers.sendResult(res, {signed});
-        })
-        .catch(helpers.sendError(res, 500));
+        F.fork(
+            helpers.sendError(res),
+            helpers.sendResult(res)
+        )
+    ])(data);
 });
 
 module.exports = router;
